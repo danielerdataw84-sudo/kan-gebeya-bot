@@ -31,12 +31,14 @@ def run_health_check_server():
 
 # ---------------------------------------------------------
 # BOT CONFIGURATION
+# ⚠️ አትዘንጋ፦ BOT_USERNAME የሚለውን ቦታ ላይ Telegram @BotFather የሰጠህን
+# ትክክለኛ የቦት username (ያለ @) ተካበት! (ለምሳሌ: kan_gebeya_shop_bot)
 # ---------------------------------------------------------
 BOT_TOKEN = "8990836657:AAEgyMHpLUCxYma3xbPqDGsCdYiA2D6lorM"
-BOT_USERNAME = "kan_gebeya_bot"
+BOT_USERNAME = "kan_gebeya_bot"  # <-- የቦትህ Username
 ADMIN_IDS = [6720581112]  # የአድሚን የቴሌግራም ID ቁጥር
-SUPPORT_USERNAME = "Kan_Gebeya"  # የቴሌግራም Support / የሻጭ አካውንት (ያለ @)
-CHANNEL_ID = "@kan_gebeya_free"  # የቴሌግራም ቻናልህ Username
+SUPPORT_USERNAME = "Kan_Gebeya"  # የቴሌግራም Support
+CHANNEL_ID = "@kan_gebeya_free"  # የቴሌግራም ቻናል Username
 PHONE_NUMBER = "0906078429"
 TELEBIRR_ACCOUNT = "0906078429"
 CBE_ACCOUNT = "1000000000000"
@@ -51,6 +53,15 @@ DEFAULT_CATEGORIES = [
     "📦 ሌሎች"
 ]
 
+# REGEX FOR ALL MENU BUTTONS
+MENU_BUTTONS_REGEX = (
+    '^(🛍 ምርቶች|🛒 ካርት|📦 ትዕዛዞቼ|📞 እርዳታ እና አድራሻ|🌐 ቋንቋ / Language|⚙️ አድሚን ፓነል|'
+    '➕ አዲስ ምርት ጨምር|🛠 ምርቶችን አስተካክል / ሰርዝ|📦 ትዕዛዞችን እይ|📊 የተጠቃሚዎች ብዛት|'
+    '⬅️ ወደ ዋናው ገጽ ተመለስ|🛍 Products|🛒 Cart|📦 My Orders|📞 Help & Contact|'
+    '🌐 Language / ቋንቋ|⚙️ Admin Panel|➕ Add New Product|🛠 Edit / Delete Products|'
+    '📦 View Orders|📊 User Statistics|⬅️ Back to Main Menu)$'
+)
+
 # Conversation States for Admin Add & Edit Product
 ADD_NAME, ADD_CATEGORY, ADD_PRICE, ADD_DESC, ADD_PHOTO = range(5)
 EDIT_PRICE_STATE, EDIT_DESC_STATE = range(5, 7)
@@ -62,7 +73,7 @@ logging.basicConfig(
 )
 
 # ---------------------------------------------------------
-# DICTIONARY FOR MULTI-LANGUAGE SUPPORT (አማርኛ & ENGLISH)
+# DICTIONARY FOR MULTI-LANGUAGE SUPPORT
 # ---------------------------------------------------------
 STRINGS = {
     'am': {
@@ -116,8 +127,8 @@ STRINGS = {
         'admin_view_orders': "📦 ትዕዛዞችን እይ",
         'admin_stats': "📊 የተጠቃሚዎች ብዛት",
         'admin_back_main': "⬅️ ወደ ዋናው ገጽ ተመለስ",
-        'admin_welcome': "የአድሚን አስተዳደር ገጽ እንኳን በደህና መጡ! የምትፈልጉትን መምረጥ ትችላላችሁ:",
-        'admin_enter_name': "የምርቱን ስም ያስገቡ (ለምሳሌ: የወንድ ጂንስ ሱሪ / Samsung S23):",
+        'admin_welcome': "⚙️ **የአድሚን አስተዳደር ገጽ**\n\nየምትፈልጉትን አገልግሎት መምረጥ ትችላላችሁ:",
+        'admin_enter_name': "የምርቱን ስም ያስገቡ (ለምሳሌ: የወንድ ጂንስ ሱሪ / Polo T-Shirt):",
         'admin_select_cat_prompt': "የምርቱን ካታጎሪ ከታች ካሉት ቁልፎች ይምረጡ (ወይም በጽሁፍ ይጻፉ):",
         'admin_enter_price_prompt': "የምርቱን ዋጋ በብር ያስገቡ (ቁጥር ብቻ፤ ለምሳሌ: 2500):",
         'admin_invalid_price': "⚠️ እባክዎን ትክክለኛ ቁጥር ብቻ ያስገቡ (ለምሳሌ: 2500):",
@@ -188,7 +199,7 @@ STRINGS = {
         'admin_view_orders': "📦 View Orders",
         'admin_stats': "📊 User Statistics",
         'admin_back_main': "⬅️ Back to Main Menu",
-        'admin_welcome': "Welcome to the Admin Panel! Choose an option below:",
+        'admin_welcome': "⚙️ **Admin Panel**\n\nChoose an option below:",
         'admin_enter_name': "Please enter the product name (e.g. Men's Jeans / Samsung S23):",
         'admin_select_cat_prompt': "Select product category using the buttons below (or type it):",
         'admin_enter_price_prompt': "Enter product price in Birr (numbers only, e.g. 2500):",
@@ -671,12 +682,12 @@ async def show_orders(update: Update, context: ContextTypes.DEFAULT_TYPE):
         orders = cursor.fetchall()
         conn.close()
         if not orders:
-            await update.message.reply_text("ምንም ትዕዛዞች የሉም / No orders yet.")
+            await update.message.reply_text("ምንም ትዕዛዞች የሉም / No orders yet.", reply_markup=admin_menu_keyboard(user_id))
             return
         msg = "📦 **የቅርብ ጊዜ ትዕዛዞች / Recent Orders (Admin View):**\n\n"
         for o in orders:
             msg += f"• Order #{o[0]} | @{o[1]} | {o[2]:,.2f} ETB | **{o[3]}**\n"
-        await update.message.reply_text(msg, parse_mode="Markdown")
+        await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=admin_menu_keyboard(user_id))
         return
 
     cursor.execute("SELECT id, total_price, status FROM orders WHERE user_id = ? ORDER BY id DESC", (user_id,))
@@ -703,7 +714,7 @@ async def start_add_product(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     lang = get_user_lang(user_id)
     txt = STRINGS[lang]
-    await update.message.reply_text(txt['admin_enter_name'])
+    await update.message.reply_text(txt['admin_enter_name'], reply_markup=ReplyKeyboardRemove())
     return ADD_NAME
 
 async def add_product_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -739,7 +750,7 @@ async def add_product_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         price = float(text)
         context.user_data['prod_price'] = price
-        await update.message.reply_text(txt['admin_enter_desc_prompt'])
+        await update.message.reply_text(txt['admin_enter_desc_prompt'], reply_markup=ReplyKeyboardRemove())
         return ADD_DESC
     except ValueError:
         await update.message.reply_text(txt['admin_invalid_price'])
@@ -751,7 +762,7 @@ async def add_product_desc(update: Update, context: ContextTypes.DEFAULT_TYPE):
     txt = STRINGS[lang]
 
     context.user_data['prod_desc'] = update.message.text.strip()
-    await update.message.reply_text(txt['admin_send_photo_prompt'])
+    await update.message.reply_text(txt['admin_send_photo_prompt'], reply_markup=ReplyKeyboardRemove())
     return ADD_PHOTO
 
 async def add_product_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -771,7 +782,8 @@ async def add_product_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn.commit()
     conn.close()
 
-    # Post automatically to Telegram Channel (@kan_gebeya_free)
+    actual_username = context.bot.username or BOT_USERNAME
+
     channel_posted = False
     if CHANNEL_ID:
         try:
@@ -783,7 +795,7 @@ async def add_product_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"👇 በቦቱ አማካኝነት በቀላሉ ለማዘዝ ከታች ያለውን ቁልፍ ይጫኑ:"
             )
             buy_markup = InlineKeyboardMarkup([
-                [InlineKeyboardButton("🛒 በቦት እዝዝ / Buy via Bot", url=f"https://t.me/{BOT_USERNAME}?start=prod_{product_id}")]
+                [InlineKeyboardButton("🛒 በቦት እዝዝ / Buy via Bot", url=f"https://t.me/{actual_username}?start=prod_{product_id}")]
             ])
             await context.bot.send_photo(
                 chat_id=CHANNEL_ID,
@@ -801,7 +813,7 @@ async def add_product_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         msg = (
             "✅ **ምርቱ ቦቱ ላይ ተመዝግቧል!**\n"
-            "⚠️ (ወደ ቻናል ፖስት ሲደረግ ስህተት አጋጥሟል - ቦቱ የቻናሉ አድሚን መሆኑን አረጋግጥ)::"
+            "⚠️ (ወደ ቻናል ፖስት ሲደረግ ስህተት አጋጥሟል - ቦቱ የቻናሉ አድሚን መሆኑን አረጋግጥ):"
         )
 
     await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=admin_menu_keyboard(user_id))
@@ -825,7 +837,7 @@ async def admin_manage_products(update: Update, context: ContextTypes.DEFAULT_TY
     conn.close()
 
     if not products:
-        await update.message.reply_text(txt['admin_no_products'])
+        await update.message.reply_text(txt['admin_no_products'], reply_markup=admin_menu_keyboard(user_id))
         return
 
     keyboard = []
@@ -883,7 +895,6 @@ async def handle_manage_product_callback(update: Update, context: ContextTypes.D
         await query.answer()
         await admin_manage_products(update, context)
 
-# Start edit price conversation
 async def start_edit_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -895,7 +906,7 @@ async def start_edit_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     prod_id = int(query.data.split("editprice_")[1])
     context.user_data['edit_prod_id'] = prod_id
 
-    await query.message.reply_text(txt['admin_enter_new_price'])
+    await query.message.reply_text(txt['admin_enter_new_price'], reply_markup=ReplyKeyboardRemove())
     return EDIT_PRICE_STATE
 
 async def save_edited_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -924,7 +935,6 @@ async def save_edited_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(txt['admin_invalid_price'])
         return EDIT_PRICE_STATE
 
-# Start edit description conversation
 async def start_edit_desc(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -936,7 +946,7 @@ async def start_edit_desc(update: Update, context: ContextTypes.DEFAULT_TYPE):
     prod_id = int(query.data.split("editdesc_")[1])
     context.user_data['edit_prod_id'] = prod_id
 
-    await query.message.reply_text(txt['admin_enter_new_desc'])
+    await query.message.reply_text(txt['admin_enter_new_desc'], reply_markup=ReplyKeyboardRemove())
     return EDIT_DESC_STATE
 
 async def save_edited_desc(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -969,10 +979,6 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 async def cancel_and_handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    If a menu button is pressed during an active conversation, cancel the active flow
-    and route directly to the clicked menu command.
-    """
     await handle_main_menu(update, context)
     return ConversationHandler.END
 
@@ -1001,6 +1007,7 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif text in [STRINGS['am']['btn_admin'], STRINGS['en']['btn_admin']] and user_id in ADMIN_IDS:
         await update.message.reply_text(
             txt['admin_welcome'],
+            parse_mode="Markdown",
             reply_markup=admin_menu_keyboard(user_id)
         )
     elif text in [STRINGS['am']['admin_manage_prod'], STRINGS['en']['admin_manage_prod']] and user_id in ADMIN_IDS:
@@ -1042,7 +1049,7 @@ async def show_admin_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"📦 **Total Orders:** {total_orders}\n"
         f"💰 **Total Sales:** {total_sales:,.2f} ETB"
     )
-    await update.message.reply_text(msg, parse_mode="Markdown")
+    await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=admin_menu_keyboard(user_id))
 
 # ---------------------------------------------------------
 # MAIN BOT RUNNER
@@ -1052,52 +1059,43 @@ def main():
 
     app = Application.builder().token(BOT_TOKEN).build()
 
-    # Regex pattern for all menu buttons to break out of active conversations
-    menu_buttons_regex = (
-        '^(🛍 ምርቶች|🛒 ካርት|📦 ትዕዛዞቼ|📞 እርዳታ እና አድራሻ|🌐 ቋንቋ / Language|⚙️ አድሚን ፓነል|'
-        '➕ አዲስ ምርት ጨምር|🛠 ምርቶችን አስተካክል / ሰርዝ|📦 ትዕዛዞችን እይ|📊 የተጠቃሚዎች ብዛት|'
-        '⬅️ ወደ ዋናው ገጽ ተመለስ|🛍 Products|🛒 Cart|📦 My Orders|📞 Help & Contact|'
-        '🌐 Language / ቋንቋ|⚙️ Admin Panel|➕ Add New Product|🛠 Edit / Delete Products|'
-        '📦 View Orders|📊 User Statistics|⬅️ Back to Main Menu)$'
-    )
+    menu_filter = filters.Regex(MENU_BUTTONS_REGEX)
+    text_input_filter = filters.TEXT & ~filters.COMMAND & ~menu_filter
 
-    # Add product conversation handler
     add_prod_handler = ConversationHandler(
         entry_points=[MessageHandler(filters.Regex('^(➕ አዲስ ምርት ጨምር|➕ Add New Product)$'), start_add_product)],
         states={
-            ADD_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_product_name)],
+            ADD_NAME: [MessageHandler(text_input_filter, add_product_name)],
             ADD_CATEGORY: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_product_category)],
-            ADD_PRICE: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_product_price)],
-            ADD_DESC: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_product_desc)],
+            ADD_PRICE: [MessageHandler(text_input_filter, add_product_price)],
+            ADD_DESC: [MessageHandler(text_input_filter, add_product_desc)],
             ADD_PHOTO: [MessageHandler(filters.PHOTO, add_product_photo)],
         },
         fallbacks=[
             CommandHandler('cancel', cancel),
-            MessageHandler(filters.Regex(menu_buttons_regex), cancel_and_handle)
+            MessageHandler(menu_filter, cancel_and_handle)
         ]
     )
 
-    # Edit price conversation handler
     edit_price_handler = ConversationHandler(
         entry_points=[CallbackQueryHandler(start_edit_price, pattern='^editprice_')],
         states={
-            EDIT_PRICE_STATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, save_edited_price)]
+            EDIT_PRICE_STATE: [MessageHandler(text_input_filter, save_edited_price)]
         },
         fallbacks=[
             CommandHandler('cancel', cancel),
-            MessageHandler(filters.Regex(menu_buttons_regex), cancel_and_handle)
+            MessageHandler(menu_filter, cancel_and_handle)
         ]
     )
 
-    # Edit desc conversation handler
     edit_desc_handler = ConversationHandler(
         entry_points=[CallbackQueryHandler(start_edit_desc, pattern='^editdesc_')],
         states={
-            EDIT_DESC_STATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, save_edited_desc)]
+            EDIT_DESC_STATE: [MessageHandler(text_input_filter, save_edited_desc)]
         },
         fallbacks=[
             CommandHandler('cancel', cancel),
-            MessageHandler(filters.Regex(menu_buttons_regex), cancel_and_handle)
+            MessageHandler(menu_filter, cancel_and_handle)
         ]
     )
 
